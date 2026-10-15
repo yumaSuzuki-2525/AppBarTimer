@@ -1,7 +1,7 @@
-﻿using AppBarTimer.Utils;
+﻿
 using System;
 using System.Windows;
-using System.Windows.Threading; // ★タイマー処理に必要
+using System.Windows.Threading; // タイマー処理に必要
 using System.Runtime.InteropServices; 
 using System.Windows.Interop;         
 
