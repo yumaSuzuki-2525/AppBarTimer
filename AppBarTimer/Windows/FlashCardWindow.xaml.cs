@@ -14,6 +14,17 @@ namespace AppBarTimer.Windows
         public FlashCardWindow()
         {
             InitializeComponent();
+
+            // ウィンドウのサイズが確定した直後に、画面の右上に配置する
+            this.Loaded += (s, e) =>
+            {
+                // 画面の作業領域（タスクバーを除いた有効な領域）を取得
+                var workArea = SystemParameters.WorkArea;
+
+                // 右端から20px、上から20pxの位置に移動
+                this.Left = workArea.Right - this.ActualWidth - 400;
+                this.Top = workArea.Top + 100;
+            };
         }
 
         // ① マウスが押し込まれた瞬間（位置を記憶するだけ）

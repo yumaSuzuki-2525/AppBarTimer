@@ -42,19 +42,31 @@ namespace AppBarTimer.Components
         }
 
         // ==========================================
-        // 1. UIの描画更新（画面占有・赤線ハイライト版）
+        // 1. UIの描画更新（完全不透明・角丸なし版）
         // ==========================================
         private void UpdateUI()
         {
             if (FlashCardManager.Cards.Count == 0)
             {
-                RootContainer.Visibility = Visibility.Hidden;
+                // バグ修正：RootContainerごと消すのではなく、後ろの束だけを隠す
+                BackgroundStack.Visibility = Visibility.Hidden;
+                CurrentRedStack.Visibility = Visibility.Hidden;
+                ForegroundStack.Visibility = Visibility.Hidden;
+
+                DateText.Text = ""; // 0枚の時は日付も空にする
                 return;
             }
 
-            RootContainer.Visibility = Visibility.Visible;
+            // カードがある場合は束を表示する
+            BackgroundStack.Visibility = Visibility.Visible;
+            CurrentRedStack.Visibility = Visibility.Visible;
+            ForegroundStack.Visibility = Visibility.Visible;
 
             var currentCard = FlashCardManager.Cards[currentIndex];
+
+            // 追加：日付を「yyyy/MM/dd HH:mm」の形式で左上に表示
+            DateText.Text = currentCard.CreatedAt.ToString("yyyy/MM/dd HH:mm");
+
             if (currentCard.IsDeleted)
             {
                 CardBackground.Background = new SolidColorBrush(Color.FromRgb(220, 220, 220));
@@ -70,47 +82,96 @@ namespace AppBarTimer.Components
 
             StatusText.Text = $"🔊 Center to Read  [ {currentIndex + 1} / {FlashCardManager.Cards.Count} ]";
 
-            // --- 煩わしさを生む「┘」の無限増殖描画処理 ---
+            // --- 煩わしさを生む「透過しない束」の無限増殖描画処理 ---
 
-            GeometryGroup normalLines = new GeometryGroup();
-            GeometryGroup redLine = new GeometryGroup();
+            // 塗りつぶしモードを Nonzero にすることで、隙間なく完全に透過を防ぎます
+            GeometryGroup bgGroup = new GeometryGroup { FillRule = FillRule.Nonzero };
+            GeometryGroup redGroup = new GeometryGroup { FillRule = FillRule.Nonzero };
+            GeometryGroup fgGroup = new GeometryGroup { FillRule = FillRule.Nonzero };
 
-            double cardW = 400; // メインカードの幅
-            double cardH = 260; // メインカードの高さ
+            double cardW = 420; // カード幅
+            double cardH = 500; // カード高さ
+            double offsetStep = 2.0; // 1枚あたり右下へずれる量
 
-            // ★1枚追加されるごとに、右下に何ピクセルずらすか
-            // （2.0px にすると、1000枚で画面が2000pxも占有されて最悪なUIになります＝最高）
-            double offsetStep = 2.0;
+            int totalCards = FlashCardManager.Cards.Count;
+            int targetI = currentIndex + 1;
 
-            for (int i = 1; i <= FlashCardManager.Cards.Count; i++)
+            // 奥のカードから手前のカードに向かって四角形を重ねて描画する
+            for (int i = totalCards; i >= 1; i--)
             {
                 double offset = i * offsetStep;
+                // 線ではなく「背景色が塗られた完全な四角形」をずらしながら配置する
+                var rect = new RectangleGeometry(new Rect(offset, offset, cardW, cardH));
 
-                // 右側の縦線 ｜
-                var rightLine = new LineGeometry(new Point(cardW + offset, offset), new Point(cardW + offset, cardH + offset));
-                // 下側の横線 ＿
-                var bottomLine = new LineGeometry(new Point(offset, cardH + offset), new Point(cardW + offset, cardH + offset));
+                if (i > targetI) bgGroup.Children.Add(rect);
+                else if (i == targetI) redGroup.Children.Add(rect);
+                else fgGroup.Children.Add(rect);
+            }
 
-                // 現在のページの線だけ赤色グループに追加
-                if (i - 1 == currentIndex)
+            BackgroundStack.Data = bgGroup;
+            CurrentRedStack.Data = redGroup;
+            ForegroundStack.Data = fgGroup;
+
+            // カードの増加に合わせて、土台のサイズを物理的に拡張する
+            RootContainer.Width = cardW + (totalCards * offsetStep);
+            RootContainer.Height = cardH + (totalCards * offsetStep);
+        }
+
+        // ==========================================
+        // イベント名変更（UserControl_xxx から CardBackground_xxx へ）
+        // ==========================================
+        private void CardBackground_MouseMove(object sender, MouseEventArgs e)
+        {
+            // 判定基準を一番手前のメインカード（CardBackground）に限定
+            double clickX = e.GetPosition(CardBackground).X;
+            double width = CardBackground.ActualWidth;
+
+            if (clickX < width * 0.25) HoverActionText.Text = "◀ 前へ";
+            else if (clickX > width * 0.75) HoverActionText.Text = "次へ ▶";
+            else HoverActionText.Text = isAutoPlayMode ? "⏹ 停止" : "▶ 自動再生";
+        }
+
+        private void CardBackground_MouseLeave(object sender, MouseEventArgs e)
+        {
+            HoverActionText.Text = "";
+        }
+
+        private void CardBackground_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (FlashCardManager.Cards.Count == 0) return;
+
+            // 判定基準を一番手前のメインカードに限定
+            double clickX = e.GetPosition(CardBackground).X;
+            double width = CardBackground.ActualWidth;
+
+            if (clickX < width * 0.25)
+            {
+                isAutoPlayMode = false;
+                synthesizer.SpeakAsyncCancelAll();
+                if (currentIndex > 0) { currentIndex--; UpdateUI(); }
+            }
+            else if (clickX > width * 0.75)
+            {
+                isAutoPlayMode = false;
+                synthesizer.SpeakAsyncCancelAll();
+                if (currentIndex < FlashCardManager.Cards.Count - 1) { currentIndex++; UpdateUI(); }
+            }
+            else
+            {
+                if (isAutoPlayMode || synthesizer.State == SynthesizerState.Speaking)
                 {
-                    redLine.Children.Add(rightLine);
-                    redLine.Children.Add(bottomLine);
+                    isAutoPlayMode = false;
+                    synthesizer.SpeakAsyncCancelAll();
+                    StatusText.Text = $"⏹ Stopped  [ {currentIndex + 1} / {FlashCardManager.Cards.Count} ]";
                 }
                 else
                 {
-                    normalLines.Children.Add(rightLine);
-                    normalLines.Children.Add(bottomLine);
+                    playCount = 0;
+                    isAutoPlayMode = true;
+                    StatusText.Text = $"▶ Auto Playing... (1/{maxPlays})  [ {currentIndex + 1} / {FlashCardManager.Cards.Count} ]";
+                    SpeakCurrentText();
                 }
             }
-
-            // 計算した1000本分の線を一気に画面に適用（超高速）
-            StackEdges.Data = normalLines;
-            CurrentRedEdge.Data = redLine;
-
-            // ★カードの増加に合わせて、土台のサイズ自体を物理的に拡張する
-            RootContainer.Width = cardW + (FlashCardManager.Cards.Count * offsetStep);
-            RootContainer.Height = cardH + (FlashCardManager.Cards.Count * offsetStep);
         }
 
         // 💥「完全削除」（物理削除）
@@ -124,9 +185,15 @@ namespace AppBarTimer.Components
 
             if (FlashCardManager.Cards.Count == 0)
             {
-                EnglishText.Text = "カードがありません。";
+                EnglishText.Text = "カードがありません。\nCtrl + V で追加してください。";
                 StatusText.Text = "Empty";
-                RootContainer.Visibility = Visibility.Hidden;
+                DateText.Text = ""; // 日付を消す
+
+                // ★バグ修正：RootContainerではなく束だけを隠す
+                BackgroundStack.Visibility = Visibility.Hidden;
+                CurrentRedStack.Visibility = Visibility.Hidden;
+                ForegroundStack.Visibility = Visibility.Hidden;
+
                 return;
             }
 
@@ -278,6 +345,8 @@ namespace AppBarTimer.Components
         private void SearchTranslate_Click(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
+            // カードが0件の場合は何もしない
+            if (FlashCardManager.Cards.Count == 0) return;
             if (string.IsNullOrWhiteSpace(EnglishText.Text)) return;
 
             string query = Uri.EscapeDataString(FlashCardManager.Cards[currentIndex].EnglishSentence);
@@ -286,20 +355,59 @@ namespace AppBarTimer.Components
             if (transWindow == null || !transWindow.IsLoaded)
             {
                 transWindow = new TranslationWindow();
+                // 画面の左側に配置する
+                var workArea = SystemParameters.WorkArea;
+                transWindow.Left = workArea.Left + 20; // 左から20px
+                transWindow.Top = workArea.Top + 20;   // 上から20px
                 transWindow.Show();
             }
 
             transWindow.NavigateTo(url);
-            transWindow.Activate();
+
+
+            // transWindow.Activate(); を削除し、単語カードを前面に戻す
+            Window parentWindow = Window.GetWindow(this);
+            if (parentWindow != null)
+            {
+                parentWindow.Activate();
+            }
         }
 
+        //private void SearchImage_Click(object sender, MouseButtonEventArgs e)
+        //{
+        //    e.Handled = true;
+        //    if (string.IsNullOrWhiteSpace(EnglishText.Text)) return;
+
+        //    string query = Uri.EscapeDataString(FlashCardManager.Cards[currentIndex].EnglishSentence);
+        //    Process.Start(new ProcessStartInfo { FileName = $"https://www.google.com/search?tbm=isch&q={query}", UseShellExecute = true });
+        //}
+        // 🖼「画像」検索ボタン（専用ウィンドウを上書きして開く）
         private void SearchImage_Click(object sender, MouseButtonEventArgs e)
         {
             e.Handled = true;
+            if (FlashCardManager.Cards.Count == 0) return;
             if (string.IsNullOrWhiteSpace(EnglishText.Text)) return;
 
             string query = Uri.EscapeDataString(FlashCardManager.Cards[currentIndex].EnglishSentence);
-            Process.Start(new ProcessStartInfo { FileName = $"https://www.google.com/search?tbm=isch&q={query}", UseShellExecute = true });
+            // 画像検索のURL
+            string url = $"https://www.google.com/search?tbm=isch&q={query}";
+
+            // ウィンドウが無ければ作る、あれば使い回す
+            if (transWindow == null || !transWindow.IsLoaded)
+            {
+                transWindow = new TranslationWindow();
+                // ★追加：画面の左側に配置する
+                var workArea = SystemParameters.WorkArea;
+                transWindow.Left = workArea.Left + 20; // 左から20px
+                transWindow.Top = workArea.Top + 20;   // 上から20px
+            }
+
+            transWindow.NavigateTo(url);
+            Window parentWindow = Window.GetWindow(this);
+            if (parentWindow != null)
+            {
+                parentWindow.Activate();
+            }
         }
 
         private void LogicalDelete_Click(object sender, MouseButtonEventArgs e)
@@ -312,6 +420,42 @@ namespace AppBarTimer.Components
             UpdateUI();
         }
 
-       
+        // ==========================================
+        // 束の部分をクリックしたときのページジャンプ処理
+        // ==========================================
+        private void RootContainer_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (FlashCardManager.Cards.Count == 0) return;
+
+            // クリックされた座標（X, Y）を取得
+            Point pos = e.GetPosition(RootContainer);
+
+            double cardW = 420; // メインカードの幅
+            double cardH = 320; // メインカードの高さ
+            double offsetStep = 2.0; // 1枚あたりのズレ幅
+
+            // メインカードの領域外（右側か下側 ＝ 束の部分）をクリックしたか判定
+            if (pos.X > cardW || pos.Y > cardH)
+            {
+                // メインカードから何ピクセルはみ出た場所をクリックしたか計算
+                // （右方向と下方向、より大きくはみ出ている方を基準にする）
+                double delta = Math.Max(pos.X - cardW, pos.Y - cardH);
+
+                // はみ出たピクセル量 ÷ 1枚のズレ(2.0px) で、何枚目の位置かを逆算！
+                int targetIndex = (int)Math.Round(delta / offsetStep);
+
+                // 計算結果が 0 ～ 最後のページ の範囲に収まるように安全対策
+                targetIndex = Math.Max(0, Math.Min(targetIndex, FlashCardManager.Cards.Count - 1));
+
+                // 算出したページにジャンプ！
+                currentIndex = targetIndex;
+
+                // 自動再生中なら安全のために止める
+                isAutoPlayMode = false;
+                synthesizer.SpeakAsyncCancelAll();
+
+                UpdateUI();
+            }
+        }
     }
 }

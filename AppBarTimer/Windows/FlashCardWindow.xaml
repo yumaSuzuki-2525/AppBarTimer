@@ -4,7 +4,7 @@
         xmlns:components="clr-namespace:AppBarTimer.Components"
         Title="FlashCards" SizeToContent="WidthAndHeight" MinWidth="440" MinHeight="340"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
-        Topmost="True" WindowStartupLocation="CenterScreen"
+        Topmost="True" WindowStartupLocation="Manual"
         PreviewMouseLeftButtonDown="Window_PreviewMouseLeftButtonDown"
         PreviewMouseMove="Window_PreviewMouseMove"
         PreviewMouseLeftButtonUp="Window_PreviewMouseLeftButtonUp"
