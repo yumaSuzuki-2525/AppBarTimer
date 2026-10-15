@@ -9,8 +9,8 @@
     <Grid Background="#888888">
         <StackPanel>
             <!-- アナログ時計（上部に配置） -->
-            <Grid Width="40" Height="40" VerticalAlignment="Top" Margin="0,15,0,0">
-
+            <Grid Width="40" Height="40" VerticalAlignment="Top" Margin="0,15,0,0" 
+              Cursor="Hand" MouseLeftButtonUp="SmallClock_Click" Background="Transparent">
                 <!-- ② 時計の枠自体を塗りつぶす（四角いBorderは削除） -->
                 <Ellipse Stroke="Gray" StrokeThickness="2" Fill="#222222" />
 
@@ -41,6 +41,16 @@
 
             <!-- ② 今回作ったタイマーUI部品をここにポン付けする -->
             <components:TimerControl />
+
+            <!-- ③ 【新規】単語カード起動アイコン -->
+            <Grid Width="40" Height="40" Margin="0,25,0,0" Cursor="Hand" MouseLeftButtonUp="FlashCardIcon_Click" Background="Transparent" ToolTip="単語カードを開く">
+                <!-- 後ろのカード（グレーの枠線） -->
+                <Border Width="22" Height="26" BorderBrush="#555555" BorderThickness="2" CornerRadius="3" Margin="10,0,0,8" VerticalAlignment="Bottom" HorizontalAlignment="Left"/>
+                <!-- 手前のカード（文字入り） -->
+                <Border Width="22" Height="26" Background="#222222" BorderBrush="#EFEADF" BorderThickness="2" CornerRadius="3" Margin="0,8,10,0" VerticalAlignment="Top" HorizontalAlignment="Right">
+                    <TextBlock Text="A" Foreground="#EFEADF" FontSize="14" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                </Border>
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>

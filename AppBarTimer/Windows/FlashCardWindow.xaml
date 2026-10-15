@@ -1,0 +1,18 @@
+﻿<Window x:Class="AppBarTimer.Windows.FlashCardWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:components="clr-namespace:AppBarTimer.Components"
+        Title="FlashCards" Height="320" Width="480"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        Topmost="True" WindowStartupLocation="CenterScreen"
+        PreviewMouseLeftButtonDown="Window_PreviewMouseLeftButtonDown"
+        PreviewMouseMove="Window_PreviewMouseMove"
+        PreviewMouseLeftButtonUp="Window_PreviewMouseLeftButtonUp"
+        MouseRightButtonUp="Window_MouseRightButtonUp"
+        PreviewKeyDown="Window_PreviewKeyDown">
+
+    <Grid>
+        <!-- 先ほど作った単語カードコンポーネントを配置 -->
+        <components:FlashCardControl x:Name="MainCardControl" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+    </Grid>
+</Window>

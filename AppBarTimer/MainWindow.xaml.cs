@@ -57,5 +57,17 @@ namespace AppBarTimer
             int extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
             SetWindowLong(hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TOOLWINDOW);
         }
+        // 小さい時計をクリックしたときの処理
+        private void SmallClock_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var largeClock = new Windows.LargeClockWindow();
+            largeClock.Show(); // ShowDialogではなくShowにすることで、AppBarをロックせず独立して表示し続けられます
+        }
+        // 単語カードアイコンをクリックしたときの処理
+        private void FlashCardIcon_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var flashCardWindow = new Windows.FlashCardWindow();
+            flashCardWindow.Show();
+        }
     }
 }

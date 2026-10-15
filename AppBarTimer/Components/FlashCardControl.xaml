@@ -1,0 +1,61 @@
+﻿<UserControl x:Class="AppBarTimer.Components.FlashCardControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Width="420" Height="260" Cursor="Hand" MouseLeftButtonUp="Card_Click">
+
+    <Grid Background="Transparent">
+
+        <!-- 奥のカード群（少し暗めのアイボリーで影のように見せる） -->
+        <Border Background="#E8E2D2" BorderBrush="#D5CDBF" BorderThickness="1" CornerRadius="12" Margin="16,16,0,0"/>
+        <Border Background="#EFEADF" BorderBrush="#D5CDBF" BorderThickness="1" CornerRadius="12" Margin="8,8,8,8"/>
+
+        <!-- メインカード（目に優しい温かみのあるオフホワイト） -->
+        <Border x:Name="CardBackground" Background="#F9F6F0" BorderBrush="#D5CDBF" BorderThickness="1" CornerRadius="12" Margin="0,0,16,16">
+            <Grid Margin="24">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- 表面：英文（真っ黒ではなく、濃いチャコールグレー） -->
+                <TextBlock x:Name="EnglishText" Grid.Row="0"
+                           Text="This is an example of a longer sentence that you might find in programming documentation, such as Go's CodeReviewComments." 
+                           FontSize="18" Foreground="#3A3532" FontWeight="Medium"
+                           TextWrapping="Wrap" TextAlignment="Left" VerticalAlignment="Center"
+                           LineHeight="28"/>
+
+                <!-- フッター -->
+                <!-- フッター（修正版：検索ボタンを追加） -->
+                <Grid Grid.Row="1" Margin="0,15,0,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                        <TextBlock x:Name="StatusText" Text="🔊 Center to Read" FontSize="14" Foreground="#8C8279" VerticalAlignment="Center" Margin="0,0,15,0"/>
+
+                        <!-- 🔍 意味検索ボタン -->
+                        <Border Background="#E8E2D2" CornerRadius="4" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonUp="SearchMeaning_Click">
+                            <TextBlock Text="🔍 意味" FontSize="12" Foreground="#554C45" Padding="8,4" FontWeight="Bold"/>
+                        </Border>
+
+                        <!-- 🖼 画像検索ボタン -->
+                        <Border Background="#E8E2D2" CornerRadius="4" Margin="0,0,8,0" Cursor="Hand" MouseLeftButtonUp="SearchImage_Click">
+                            <TextBlock Text="🖼 画像" FontSize="12" Foreground="#554C45" Padding="8,4" FontWeight="Bold"/>
+                        </Border>
+
+                        <!-- 🗑 削除ボタン（少し赤みを持たせて注意喚起） -->
+                        <Border Background="#E8D2D2" CornerRadius="4" Cursor="Hand" MouseLeftButtonUp="DeleteCard_Click">
+                            <TextBlock Text="🗑 削除" FontSize="12" Foreground="#884444" Padding="8,4" FontWeight="Bold"/>
+                        </Border>
+                    </StackPanel>
+                    
+                    <!-- ページ番号 -->
+                    <TextBlock x:Name="PageText" Text="1 / 42" FontSize="14" Foreground="#8C8279" HorizontalAlignment="Right" VerticalAlignment="Center" FontFamily="Consolas" Grid.Column="1"/>
+                </Grid>
+            </Grid>
+        </Border>
+
+    </Grid>
+</UserControl>

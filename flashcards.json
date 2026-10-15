@@ -1,0 +1,20 @@
+[
+  {
+    "Id": "dd1e54fa-33bc-4b28-bbab-7b61415e90a2",
+    "EnglishSentence": "This is the first sample sentence. Click the center to read.",
+    "Note": "",
+    "CreatedAt": "2026-10-16T03:11:27.4810751+09:00"
+  },
+  {
+    "Id": "36c88f5f-f554-412c-8273-7b1e13cc7062",
+    "EnglishSentence": "Click the right side to go to the next card, and the left side to go back.",
+    "Note": "",
+    "CreatedAt": "2026-10-16T03:11:27.4811562+09:00"
+  },
+  {
+    "Id": "47388e4d-c01a-45a4-927a-f678541ecc78",
+    "EnglishSentence": "Programming documentation often contains useful English expressions.",
+    "Note": "",
+    "CreatedAt": "2026-10-16T03:11:27.4811569+09:00"
+  }
+]
