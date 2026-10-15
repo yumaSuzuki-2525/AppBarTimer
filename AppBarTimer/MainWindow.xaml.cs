@@ -1,35 +1,61 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-
+﻿using AppBarTimer.Utils;
 using System;
+using System.Windows;
+using System.Windows.Threading; // ★タイマー処理に必要
+using System.Runtime.InteropServices; 
+using System.Windows.Interop;         
 
-namespace TaskBarTimer
+namespace AppBarTimer
 {
     public partial class MainWindow : Window
     {
+        private DispatcherTimer timer;
+
+        [DllImport("user32.dll")]
+        private static extern int GetWindowLong(IntPtr hwnd, int index);
+        [DllImport("user32.dll")]
+        private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_TOOLWINDOW = 0x00000080;
+
         public MainWindow()
         {
             InitializeComponent();
-            // ウィンドウの枠やタイトルバーを消す設定
             this.WindowStyle = WindowStyle.None;
             this.ResizeMode = ResizeMode.NoResize;
             this.Topmost = true;
+
+            // 時計を動かすタイマーの起動（0.5秒ごとに処理を実行）
+            timer = new DispatcherTimer();
+            timer.Interval = TimeSpan.FromMilliseconds(500);
+            timer.Tick += Timer_Tick;
+            timer.Start();
         }
 
-        // ウィンドウの準備ができた瞬間に呼ばれるイベント
+        // 時刻に合わせて針の角度（Angle）を計算する処理
+        private void Timer_Tick(object? sender, EventArgs e)
+        {
+            DateTime now = DateTime.Now;
+
+            // 秒針 (1秒で6度進む)
+            SecondHandRotate.Angle = now.Second * 6;
+            // 分針 (1分で6度進む ＋ 秒数に応じて少しずつ進める)
+            MinuteHandRotate.Angle = (now.Minute * 6) + (now.Second * 0.1);
+            // 時針 (1時間で30度進む ＋ 分数に応じて少しずつ進める)
+            HourHandRotate.Angle = ((now.Hour % 12) * 30) + (now.Minute * 0.5);
+        }
+
         protected override void OnSourceInitialized(EventArgs e)
         {
             base.OnSourceInitialized(e);
-            // 画面の上（Edge=1）にAppBarとして登録する
-            AppBarFunctions.SetAppBar(this, 1);
+
+            // ① AppBarとして登録する処理（左寄せ）
+            AppBarFunctions.SetAppBar(this, 0);
+
+            // ② Alt+Tabから完全に姿を消す処理を追加
+            IntPtr hwnd = new WindowInteropHelper(this).Handle;
+            int extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+            SetWindowLong(hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_TOOLWINDOW);
         }
     }
 }
