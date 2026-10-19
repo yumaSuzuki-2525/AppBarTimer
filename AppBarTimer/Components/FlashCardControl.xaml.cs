@@ -400,6 +400,7 @@ namespace AppBarTimer.Components
                 var workArea = SystemParameters.WorkArea;
                 transWindow.Left = workArea.Left + 20; // 左から20px
                 transWindow.Top = workArea.Top + 20;   // 上から20px
+                transWindow.Show();
             }
 
             transWindow.NavigateTo(url);
